@@ -6,7 +6,8 @@ import os
 import boto3
 
 from pydantic import BaseModel
-import requests
+
+# import requests
 
 from prompts import LYRICS_GENERATOR_PROMPT, PROMPT_GENERATOR_PROMPT
 
@@ -185,7 +186,12 @@ class MusicGenServer:
         )
 
         audio_s3_key = f"{uuid.uuid4()}.wav"
-        s3_client.upload_file(output_path, bucket_name, audio_s3_key)
+        s3_client.upload_file(
+            output_path,
+            bucket_name,
+            audio_s3_key,
+            ExtraArgs={"ContentType": "audio/wav"},
+        )
         os.remove(output_path)
 
         # Thumbnail generation
@@ -198,7 +204,12 @@ class MusicGenServer:
         image.save(image_output_path)
 
         image_s3_key = f"{uuid.uuid4()}.png"
-        s3_client.upload_file(image_output_path, bucket_name, image_s3_key)
+        s3_client.upload_file(
+            image_output_path,
+            bucket_name,
+            image_s3_key,
+            ExtraArgs={"ContentType": "image/png"},
+        )
         os.remove(image_output_path)
 
         # Category generation: "hip-hop", "rock"
@@ -276,27 +287,23 @@ class MusicGenServer:
             **request.model_dump(exclude={"described_lyrics", "prompt"}),
         )
 
+    # Remote-callable wrapper for testing from `modal run` (endpoints can't use .remote)
+    @modal.method()
+    def test_described_lyrics(
+        self, request: GenerateWithDescribedLyricsRequest
+    ) -> GenerateMusicResponseS3:
+        return self.generate_with_described_lyrics.local(request)
+
 
 @app.local_entrypoint()
 def main():
     server = MusicGenServer()
-    endpoint_url = server.generate_with_described_lyrics.get_web_url()
-
-    # request_data = GenerateWithDescribedLyricsRequest(
-    #     prompt="rave, funk, 140BPM, disco",
-    #     described_lyrics="lyrics about water bottles",
-    #     guidance_scale=15,
-    # )
-
-    # payload = request_data.model_dump()
-
-    # response = requests.post(endpoint_url, json=payload)
-    # response.raise_for_status()
-    # result = GenerateMusicResponseS3(**response.json())
-
-    print(f"Success: {endpoint_url}")
-
-    # audio_bytes = base64.b64decode(result.audio_data)
-    # output_filename = "generated.wav"
-    # with open(output_filename, "wb") as f:
-    #     f.write(audio_bytes)
+    request = GenerateWithDescribedLyricsRequest(
+        prompt="rave, funk, 140BPM, disco",
+        described_lyrics="lyrics about water bottles",
+        guidance_scale=15,
+        audio_duration=30,  # keep short for a quick test
+        infer_step=30,
+    )
+    result = server.test_described_lyrics.remote(request)
+    print(result)  # s3_key, cover_image_s3_key, categories

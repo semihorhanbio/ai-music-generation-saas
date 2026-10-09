@@ -1,5 +1,6 @@
-transformers
-diffusers
-torch
+transformers==4.50.0
+diffusers==0.33.1
+torch==2.8.0
+torchaudio==2.8.0
 pydantic
 boto3
