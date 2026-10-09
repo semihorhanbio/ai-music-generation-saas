@@ -31,15 +31,15 @@ export const auth = betterAuth({
         checkout({
           products: [
             {
-              productId: "a209b547-608c-44e7-9178-4976a73c7135",
+              productId: "a7718385-8d01-48ec-b4c6-122de876bc37",
               slug: "small",
             },
             {
-              productId: "11bce5cb-bfda-4c8f-afcc-4a512e2d7361",
+              productId: "c1f2c317-0eeb-41d9-b276-49505c56a9b1",
               slug: "medium",
             },
             {
-              productId: "7ddf3794-111c-45ba-bd4c-36935d8ed81b",
+              productId: "7550c117-af48-4fa5-8d34-b4747b181f4b",
               slug: "large",
             },
           ],
